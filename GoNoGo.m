@@ -3,8 +3,8 @@ function catcherror = GoNoGo
 catcherror = 0; % default to no error code, if error, this variable will contain details, and a stack trace
 %checkForUpdate(fileparts(mfilename('fullpath')));
 [subj, runnum, presTime,  gapTime, respTime] = getSessionInfo; if isempty(subj); return; end
-goPercent = 0.75; % code: 1
-rareGoPercent = 0.125; % code: 2
+goPercent = 0.75;
+rareGoPercent = 0.125;
 noGoPercent = rareGoPercent;
 
 
@@ -43,11 +43,14 @@ try
     trials_rarego = ones(1,round((nTrials*rareGoPercent)))*3;
     trialConditions = [trials_go trials_nogo trials_rarego];
     trialConditions = trialConditions(randperm(nTrials));
+    jitStd = 500;
+    jitMean = gapTime;
+    jitAll = jitStd.*randn(nTrials,1) + jitMean;
     T = table;
     keys = {'escape', 'RightArrow', 'space'};
     for i = 1: nTrials
         trialCondition = trialConditions(i);
-        [responseKey, rt] = showDot(params, trialCondition, presTime, respTime);
+        [responseKey, rt, trialOnset] = showDot(params, trialCondition, presTime, respTime);
         if trialCondition == 1
             correctResp = '1!';
             trialType = 'go';
@@ -72,7 +75,7 @@ try
         T.subjResp{i,1} = responseKey;
         T.RT{i,1} = rt;
         writetable(T, datafile);
-        WaitSecs(gapTime/1000);
+        WaitSecs('UntilTime', trialOnset + (presTime/1000) + (respTime/1000) + (jitAll(i)/1000));
     end
     Screen('Preference', 'VisualDebugLevel', oldLevel);
     CleanUp();
@@ -105,7 +108,7 @@ end
 
 
 
-function [responseKey, rt] = showDot(params, trialCondition, presTime, respTime)
+function [responseKey, rt, tOnset] = showDot(params, trialCondition, presTime, respTime)
 % draw the number to screen
 if trialCondition == 1
     circleColor = [0.5 0.5 0.5];
@@ -119,8 +122,8 @@ Screen('FillOval', params.win, circleColor, dotRect);
 tOnset = Screen('Flip',params.win);
 
 %wait for presentation duration then remove 
-WaitSecs(presTime/1000);
-tOffset = Screen('Flip',params.win);
+% WaitSecs(presTime/1000);
+% tOffset = Screen('Flip',params.win);
 
 keyIsPressed = 0;
 keyPressedTime = 0; %#ok
@@ -129,6 +132,12 @@ rt = 999;
 elapsedTime = 0;
 
 while ~keyIsPressed && elapsedTime <= respTime
+    if elapsedTime < presTime
+        Screen('FillOval', params.win, circleColor, dotRect);
+        Screen('Flip',params.win);
+    else
+        Screen('Flip',params.win);
+    end
     [keyIsPressed, keyPressedTime, keyCode] = KbCheck(-1);
     if keyIsPressed
         responseKey = KbName(keyCode);
