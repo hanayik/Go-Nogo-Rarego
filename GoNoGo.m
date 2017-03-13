@@ -55,15 +55,18 @@ try
         [responseKey, rt, trialOnset] = showDot(params, trialCondition, presTime, respTime);
         if trialCondition == 1
             correctResp = '1!';
+            correctRespAlt = '1';
             trialType = 'go';
         elseif trialCondition == 2
             correctResp = '';
+            correctRespAlt = '';
             trialType = 'nogo';
         elseif trialCondition == 3
             correctResp = '1!';
+            correctRespAlt = '1';
             trialType = 'rarego';
         end
-        if strcmpi(responseKey, correctResp)
+        if strcmpi(responseKey, correctResp) || strcmpi(responseKey, correctRespAlt)
             acc = 1;
         else
             acc = 0;
@@ -119,7 +122,7 @@ elseif trialCondition == 2
 elseif trialCondition == 3
     circleColor = [0 0 0.8];
 end
-dotRect = CenterRectOnPoint([0 0 300 300],params.Xc, params.Yc);
+dotRect = CenterRectOnPoint([0 0 100 100],params.Xc, params.Yc);
 Screen('FillOval', params.win, circleColor, dotRect);
 tOnset = Screen('Flip',params.win);
 
@@ -505,7 +508,7 @@ doVideoRecord = [];
 prompt={'Participant: ','Session: ', 'Presentation time ms: ', 'Gap time ms: ', 'Response time ms: '};
    name='OddOrEven';
    numlines=1;
-   defaultanswer={'0','0','450', '1000', '1500'};
+   defaultanswer={'0','0','400', '500', '1000'};
  
 answer=inputdlg(prompt,name,numlines,defaultanswer);
 if isempty(answer); return; end
