@@ -18,8 +18,10 @@ end
 if isnumeric(subj); subj = num2str(subj); end;
 if isnumeric(runnum); runnum = num2str(runnum); end
 datestring = getDateAndTime; % get date string down to the minute
-instruct = sprintf(['\n\n',...
-                    '[Press spacebar to start]']); % instruction string for participant/clinician
+instruct = sprintf(['On the screen, you will be presented with circles of varying colors.\n',...
+    'If the circle is black or yellow, you will press a button on the\n',...
+    'keyboard as quickly as possible. Do not press the button if the circle is blue.\n\n',...
+    '[Press spacebar to start]']); % instruction string
 datafile = fullfile(datadir,sprintf('%s_%s_%s_%s.csv',subj, runnum,mfilename, datestring)); % make data file name for saving
 
 % ------ don't edit below this line unless you know what you're doing -----
@@ -43,9 +45,9 @@ try
     trials_rarego = ones(1,round((nTrials*rareGoPercent)))*3;
     trialConditions = [trials_go trials_nogo trials_rarego];
     trialConditions = trialConditions(randperm(nTrials));
-    jitStd = 500;
-    jitMean = gapTime;
-    jitAll = jitStd.*randn(nTrials,1) + jitMean;
+%     jitStd = 500;
+%     jitMean = gapTime;
+%     jitAll = jitStd.*randn(nTrials,1) + jitMean;
     T = table;
     keys = {'escape', 'RightArrow', 'space'};
     for i = 1: nTrials
@@ -75,7 +77,7 @@ try
         T.subjResp{i,1} = responseKey;
         T.RT{i,1} = rt;
         writetable(T, datafile);
-        WaitSecs('UntilTime', trialOnset + (presTime/1000) + (respTime/1000) + (jitAll(i)/1000));
+        WaitSecs('UntilTime', trialOnset + (presTime/1000) + (respTime/1000) + (gapTime/1000));
     end
     Screen('Preference', 'VisualDebugLevel', oldLevel);
     CleanUp();
