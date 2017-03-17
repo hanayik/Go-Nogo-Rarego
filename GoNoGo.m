@@ -19,14 +19,14 @@ if isnumeric(subj); subj = num2str(subj); end;
 if isnumeric(runnum); runnum = num2str(runnum); end
 datestring = getDateAndTime; % get date string down to the minute
 instruct = sprintf(['On the screen, you will be presented with circles of varying colors.\n',...
-    'If the circle is black or yellow, you will press a button on the\n',...
+    'If the circle is gray or yellow, you will press a button on the\n',...
     'keyboard as quickly as possible. Do not press the button if the circle is blue.\n\n',...
     '[Press spacebar to start]']); % instruction string
 datafile = fullfile(datadir,sprintf('%s_%s_%s_%s.csv',subj, runnum,mfilename, datestring)); % make data file name for saving
 
 % ------ don't edit below this line unless you know what you're doing -----
 % -------------------------------------------------------------------------
-nTrials = 100;
+nTrials = 200;
 KbName('UnifyKeyNames'); % make all keyboards similar
 oldLevel = Screen('Preference', 'VisualDebugLevel', 1);
 if veryPreciseTimingNeeded
@@ -40,9 +40,9 @@ ShowInstructions(params, instruct, {'space', 'escape'}); % put instructions on s
 WaitSecs(0.5); % wait for 500 ms just to have a smooth transition from instruct to task
 Screen('TextSize',params.win, 40);
 try
-    trials_go = ones(1,round((nTrials*goPercent)));
-    trials_nogo = ones(1,round((nTrials*noGoPercent)))*2;
-    trials_rarego = ones(1,round((nTrials*rareGoPercent)))*3;
+    trials_go = ones(1,round((nTrials*goPercent))); % go trials (condition 1)
+    trials_nogo = ones(1,round((nTrials*noGoPercent)))*2; % no go trials (condition 2)
+    trials_rarego = ones(1,round((nTrials*rareGoPercent)))*3; % rae go trials (condition 3)
     trialConditions = [trials_go trials_nogo trials_rarego];
     trialConditions = trialConditions(randperm(nTrials));
 %     jitStd = 500;
@@ -81,14 +81,19 @@ try
         T.RT{i,1} = rt;
         writetable(T, datafile);
         WaitSecs('UntilTime', trialOnset + (presTime/1000) + (respTime/1000) + (gapTime/1000));
+        if i == 100
+            DrawFormattedText(params.win, 'You can take a break. Press the ''1'' key to start again.','center','center');
+            Screen('Flip',params.win);
+            KbWait(-1);
+            Screen('Flip',params.win);
+            WaitSecs(1);
+        end
     end
     Screen('Preference', 'VisualDebugLevel', oldLevel);
     CleanUp();
-    save_to_base(1);
     WaitSecs(1);
     
 catch catcherror
-    save_to_base(1);
     CleanUp();
 end
 end
@@ -118,9 +123,9 @@ function [responseKey, rt, tOnset] = showDot(params, trialCondition, presTime, r
 if trialCondition == 1
     circleColor = [0.5 0.5 0.5];
 elseif trialCondition == 2
-    circleColor = [1 1 0.4];
-elseif trialCondition == 3
     circleColor = [0 0 0.8];
+elseif trialCondition == 3
+    circleColor = [1 1 0.4];
 end
 dotRect = CenterRectOnPoint([0 0 100 100],params.Xc, params.Yc);
 Screen('FillOval', params.win, circleColor, dotRect);
@@ -311,7 +316,7 @@ end
 %choose max screen number (will be the external monitor if connected)
 params.screen = max(Screen('Screens'));
 params.font = 'Arial'; %set the global font for PTB to use
-params.tsize = 18; %set text size
+params.tsize = 28; %set text size
 params.TextColor = [params.colors.black]; %set global text color
 %set the background color of the screen (defaults to gray)
 params.background = params.colors.white;
